@@ -1,0 +1,15 @@
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!-- PROD -->
+<properties>
+    <comment>Properties for Bohnets POStagger</comment>
+    <entry key="modelPathHead">/opt/texton/res/web/</entry>
+    <entry key="modelPathTail">/BohnetsTagger/</entry>
+    <entry key="models">de,en,es,fr,zh</entry>
+    <entry key="de">tag-ger-3.6.model</entry>
+    <entry key="en">CoNLL2009-ST-English-ALL.anna-3.3.postagger.model</entry>
+	<entry key="es">CoNLL2009-ST-Spanish-ALL.anna-3.3.postagger.model</entry>
+	<entry key="fr">ftb6_1.conll09.crossannotated.anna-3.3-d8.jar.postagger.model</entry>
+	<entry key="zh">CoNLL2009-ST-Chinese-ALL.anna-3.3.postagger.model</entry>
+</properties>
+
+
