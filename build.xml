@@ -5,11 +5,10 @@
       Part of DK-CLARIN
 
       Author: Bart Jongejan
-
   -->
     <property environment="env"/>
     <!-- Define Ivy stuff -->
-    <property name="ivy.install.version" value="2.0.0" />
+    <property name="ivy.install.version" value="2.2.0" />
     <property name="ivy.jar.dir" value="${basedir}/lib" />
     <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
     <property name="central.repo" value="https://repo1.maven.org/maven2" />
@@ -86,8 +85,8 @@
     <target name="compile" depends="clean, resolve, envir" description="Compiles the whole bundle">
         <mkdir dir="${class.dir}"/>
         <javac srcdir="${src.dir}" destdir="${class.dir}" classpathref="classpath" encoding="utf-8" debuglevel="lines,vars,source" debug="true" >
-            <!-- compilerarg value="-Xlint:unchecked"/  -->
-            <compilerarg value="-Xlint"/>
+            <compilerarg value="-Xlint:unchecked"/>
+            <!--compilerarg value="-Xlint"/-->
         </javac>
     </target>
 
@@ -102,7 +101,7 @@
     </target>
 
     <!-- Pack as war file -->
-    <target name="war" depends="envir, jar" description="Pack to serwlet war">
+    <target name="war" depends="envir, jar" description="Pack to servlet war">
         <mkdir dir="${war.dir}"/>
         <war destfile="${war.dir}/${ant.project.name}.war" webxml="web.xml">
             <fileset dir="${web.dir}"/>
