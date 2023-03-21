@@ -1,6 +1,10 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 
 import java.nio.charset.StandardCharsets;
 
@@ -12,44 +16,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
-import java.util.Iterator;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Properties;
 import java.util.ArrayList;
-//import java.util.Enumeration;
+import java.util.Collection;
+import java.util.Iterator;
+
 import java.util.Properties;
 
-import is2.data.Cluster;
-import is2.data.DataF;
-import is2.data.DataFES;
-import is2.data.F2SF;
-import is2.data.FV;
-import is2.data.Instances;
-import is2.data.Long2Int;
-import is2.data.Long2IntInterface;
-import is2.data.Parse;
-import is2.data.PipeGen;
-import is2.data.SentenceData09;
-import is2.io.CONLLReader09;
-import is2.io.CONLLWriter09;
-import is2.tools.Retrainable;
-import is2.tools.Tool;
-import is2.util.DB;
-import is2.util.OptionsSuper;
-import is2.util.ParserEvaluator;
 
+import is2.data.SentenceData09;
 import is2.tag.Tagger;
 
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
-import org.apache.commons.io.IOUtils;
+
+
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.IOUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +40,10 @@ import org.slf4j.LoggerFactory;
 /*This file is 𝕌𝕋𝔽-𝟠 encoded*/
 
 @SuppressWarnings("serial")
+@MultipartConfig(fileSizeThreshold=1024*1024*10,  // 10 MB 
+                 maxFileSize=-1/*1024*1024*50*/,       // 50 MB
+                 maxRequestSize=-1/*1024*1024*100*/)    // 100 MB
+
 public class BohnetsTagger extends HttpServlet 
     {
     // Static logger object.  
@@ -122,7 +109,7 @@ public class BohnetsTagger extends HttpServlet
         if(l == 0)
             return;
 
-        //logger.debug("tag, l == "+Integer.toString(l));
+        logger.debug("tag, l == "+Integer.toString(l));
                                             //    0:ID 1:FORM 2:LEMMA 3:PLEMMA 4:POS 5:PPOS 6:FEAT 7:PFEAT 8:HEAD 9:PHEAD 10:DEPREL
                                             //   11:PDEPREL 12:FILLPRED 13:PRED 14:APREDs
         String[] forms = new String[l];     // 1
@@ -161,7 +148,7 @@ public class BohnetsTagger extends HttpServlet
         Tagger tagger = new Tagger(ModelFileName);
         SentenceData09 rawSentence = new SentenceData09(forms,plemmas,lemmas,gpos,ppos,labels,heads,fillp,ofeats,pfeats);
         SentenceData09 parsedSentence = tagger.tag(rawSentence);
-        //logger.debug("syn: "+parsedSentence.toString());
+        logger.debug("syn: "+parsedSentence.toString());
         out.println(parsedSentence.toString());
         }
 
@@ -181,7 +168,7 @@ separated by an empty line.
     public void tag(String arg,PrintWriter out,String ModelFileName)
     throws IOException    
         {
-        //logger.debug("tag("+arg+","+ModelFileName+")");
+        logger.debug("tag("+arg+","+ModelFileName+")");
         try {
             BufferedReader dis = new BufferedReader(new InputStreamReader(new FileInputStream(arg),"UTF8"));
             String str;
@@ -198,7 +185,7 @@ separated by an empty line.
                 else
                     {
                     lines.add(str);
-                    //logger.debug("str: "+str);
+                    logger.debug("str: "+str);
                     }
                 }
             java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(arg));
@@ -253,29 +240,24 @@ separated by an empty line.
         return ret;
         }
  
+    @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException 
         {
         Collection<Part> items = getParmList(request);
-    //logger.debug("Calling getParmFromMultipartFormData");
         String language = getParmFromMultipartFormData(request,items,"model");
-    //logger.debug("language "+language);
         request.setCharacterEncoding( "UTF-8" );
-    //logger.debug("request.setCharacterEncodingDONE");
         response.setContentType("text/plain; charset=UTF-8");
-    //logger.debug("response.setContentTypeDONE");
         response.setCharacterEncoding("UTF-8");
-    //logger.debug("response.setCharacterEncodingDONE");
         response.setStatus(200);
-    //logger.debug("response.setStatus");
         PrintWriter out = response.getWriter();
-        //logger.debug("doPost, RemoteAddr == "+request.getRemoteAddr()+" language == "+language);
+        logger.debug("doPost, RemoteAddr == "+request.getRemoteAddr()+" language == "+language);
 
         java.lang.String arg  = getParmsAndFiles(items,response,out);
-        //logger.debug("tag "+arg);
+        logger.debug("tag "+arg);
 
         String ModelFileName = modelFileName(language);
-        //logger.debug("ModelFileName "+ModelFileName);
+        logger.debug("ModelFileName "+ModelFileName);
         tag(arg,out,ModelFileName);      
         }
 
@@ -295,44 +277,6 @@ separated by an empty line.
             {
             logger.error("Error encountered while parsing the request: "+ex.getMessage());
             }
-/*
-        Enumeration<?> parmNames = request.getParameterNames();
-        for (Enumeration<?> e = parmNames ; e.hasMoreElements() ;) 
-            {
-            String parmName = (String)e.nextElement();
-            //logger.debug("parmName: " + parmName);            
-            String vals[] = request.getParameterValues(parmName);
-            for(int j = 0;j < vals.length;++j)
-                {
-                //logger.debug("value: " + vals[j]);            
-                }
-            }
-        
-        boolean is_multipart_formData = ServletFileUpload.isMultipartContent(request);
-
-        if(is_multipart_formData)
-            {
-            DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();
-            // Set the size threshold, above which content will be stored on disk.
-            fileItemFactory.setSizeThreshold(1*1024*1024); //1 MB
-            // Set the temporary directory to store the uploaded files of size above threshold.
-            File tmpDir = new File(TMP_DIR_PATH);
-            if(!tmpDir.isDirectory()) 
-                {
-                throw new ServletException("Trying to set \"" + TMP_DIR_PATH + "\" as temporary directory, but this is not a valid directory.");
-                }
-            fileItemFactory.setRepository(tmpDir);
-            
-            ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
-            try {
-                items = (Collection<Part>)uploadHandler.parseRequest(request);
-                }
-            catch(FileUploadException ex) 
-                {
-                logger.error("Error encountered while parsing the request: "+ex.getMessage());
-                }
-            }
-*/
         return items;
         }
 
