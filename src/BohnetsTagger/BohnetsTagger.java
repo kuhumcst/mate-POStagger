@@ -103,7 +103,7 @@ public class BohnetsTagger extends HttpServlet
         return "";
         }
 
-    public void parseSentence(ArrayList<String> lines,PrintWriter out,String ModelFileName)
+    public void parseSentence(ArrayList<String> lines,PrintWriter out,Tagger tagger)
         {
         int l = lines.size();
         if(l == 0)
@@ -145,7 +145,6 @@ public class BohnetsTagger extends HttpServlet
             fillp[k] = "_";
             }
             
-        Tagger tagger = new Tagger(ModelFileName);
         SentenceData09 rawSentence = new SentenceData09(forms,plemmas,lemmas,gpos,ppos,labels,heads,fillp,ofeats,pfeats);
         SentenceData09 parsedSentence = tagger.tag(rawSentence);
         logger.debug("syn: "+parsedSentence.toString());
@@ -174,11 +173,13 @@ separated by an empty line.
             String str;
             ArrayList<String> lines = new ArrayList<String>();
             lines.add(new String("0\t<root>\t_\t_\t_\t<root-POS>"));
+            Tagger tagger = new Tagger(ModelFileName);
+
             while ((str = dis.readLine()) != null) 
                 {
                 if (str.trim().length() == 0) 
                     {
-                    parseSentence(lines,out,ModelFileName);
+                    parseSentence(lines,out,tagger);
                     lines.clear();
                     lines.add(new String("0\t<root>\t_\t_\t_\t<root-POS>"));
                     }
@@ -190,7 +191,7 @@ separated by an empty line.
                 }
             java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(arg));
             if(lines.size() > 1)
-                parseSentence(lines,out,ModelFileName);
+                parseSentence(lines,out,tagger);
             }
         catch(UnsupportedEncodingException ue)
             {
